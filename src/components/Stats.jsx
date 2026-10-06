@@ -1,7 +1,14 @@
-function Stats({ tasks }) {
-    const total = tasks.length;
-    const done = tasks.filter((t) => t.done).length;
-    const active = total - done;
+import { useSelector } from 'react-redux';
+import {
+    selectTotalCount,
+    selectActiveCount,
+    selectDoneCount,
+} from '../features/tasks/tasksSlice';
+
+function Stats() {
+    const total = useSelector(selectTotalCount);
+    const active = useSelector(selectActiveCount);
+    const done = useSelector(selectDoneCount);
 
     return (
         <div className="stats">

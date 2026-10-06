@@ -1,19 +1,62 @@
-# React + Vite
+# Task Manager (React + Redux)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Менеджер задач на React с использованием Redux Toolkit для управления состоянием.
 
-Currently, two official plugins are available:
+## Функциональность
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Добавление задач с текстом и тегом
+- Отметка задачи как выполненной
+- Удаление задач
+- Удаление всех выполненных
+- Поиск по тексту
+- Фильтрация по статусу (все / активные / выполненные)
+- Фильтрация по тегу
+- Статистика (всего / активных / выполнено)
+- Сохранение задач в localStorage
+- Адаптивный дизайн
 
-## React Compiler
+## Архитектура после внедрения Redux
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+### До Redux
 
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
+Состояние задач хранилось в локальном `useState` компонента `App`:
 
-## Expanding the Oxlint configuration
+- `App` — единственное место, где жил массив `tasks`;
+- все компоненты (`TaskForm`, `TaskList`, `TaskItem`, `Stats`) получали данные и колбэки через пропсы;
+- изменения передавались вверх через функции-колбэки (`onAdd`, `onToggle`, `onDelete`);
+- при росте проекта это привело бы к «prop drilling» — передаче пропсов через много уровней.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+### После Redux
+
+Состояние задач вынесено в глобальный store Redux:
+
+- **Store** (`src/app/store.js`) — единый источник истины для задач.
+- **Slice** (`src/features/tasks/tasksSlice.js`) — инкапсулирует состояние, редьюсеры и action creators.
+- **Компоненты**:
+  - `TaskForm` — `dispatch(addTask(text, tag))`;
+  - `TaskItem` — `dispatch(toggleTask(id))`, `dispatch(deleteTask(id))`;
+  - `Stats` — читает счётчики через селекторы;
+  - `App` — `dispatch(clearDone())`, читает задачи для фильтрации.
+- **Локальный state остался** только для UI-фильтров (`search`, `filter`, `tagFilter`) — это состояние не относится к глобальным данным приложения.
+- **localStorage** синхронизируется через `useEffect` в `App.jsx`: при изменении `tasks` в Redux массив записывается в хранилище, при инициализации — читается в `tasksSlice`.
+
+## Редьюсеры
+
+| Редьюсер | Действие | Описание |
+|----------|----------|----------|
+| `addTask` | `tasks/addTask` | Добавляет задачу в начало списка. Использует `prepare` для генерации `id` (nanoid) и `createdAt`. |
+| `toggleTask` | `tasks/toggleTask` | Переключает `done` у задачи по `id`. |
+| `deleteTask` | `tasks/deleteTask` | Удаляет задачу по `id`. |
+| `clearDone` | `tasks/clearDone` | Удаляет все выполненные задачи. |
+
+## Селекторы
+
+| Селектор | Возвращает |
+|----------|-----------|
+| `selectAllTasks` | Все задачи |
+| `selectActiveTasks` | Только активные (`done === false`) |
+| `selectDoneTasks` | Только выполненные (`done === true`) |
+| `selectTotalCount` | Количество всех задач |
+| `selectActiveCount` | Количество активных |
+| `selectDoneCount` | Количество выполненных |
+| `selectAllTags` | Массив уникальных тегов + `'all'` в начале |

@@ -1,13 +1,16 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { addTask } from '../features/tasks/tasksSlice';
 
-function TaskForm({ onAdd }) {
+function TaskForm() {
     const [text, setText] = useState('');
     const [tag, setTag] = useState('');
+    const dispatch = useDispatch();
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!text.trim()) return;
-        onAdd(text, tag);
+        dispatch(addTask(text, tag));
         setText('');
         setTag('');
     };

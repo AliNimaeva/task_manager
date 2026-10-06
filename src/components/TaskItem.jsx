@@ -1,3 +1,6 @@
+import { useDispatch } from 'react-redux';
+import { toggleTask, deleteTask } from '../features/tasks/tasksSlice';
+
 function formatDate(iso) {
     const date = new Date(iso);
     const day = String(date.getDate()).padStart(2, '0');
@@ -8,14 +11,16 @@ function formatDate(iso) {
     return `${day}.${month}.${year} ${hours}:${minutes}`;
 }
 
-function TaskItem({ task, onToggle, onDelete }) {
+function TaskItem({ task }) {
+    const dispatch = useDispatch();
+
     return (
         <li className={`task-item ${task.done ? 'done' : ''}`}>
             <label className="task-checkbox">
                 <input
                     type="checkbox"
                     checked={task.done}
-                    onChange={() => onToggle(task.id)}
+                    onChange={() => dispatch(toggleTask(task.id))}
                 />
             </label>
 
@@ -34,7 +39,7 @@ function TaskItem({ task, onToggle, onDelete }) {
             <button
                 type="button"
                 className="delete-btn"
-                onClick={() => onDelete(task.id)}
+                onClick={() => dispatch(deleteTask(task.id))}
                 title="Удалить"
             >
                 ✕
